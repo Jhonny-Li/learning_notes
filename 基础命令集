@@ -1,0 +1,173 @@
+从github上下载源码：
+git clone +网址；
+git到指定文件夹：git clone https://...... ~/指定文件夹路径及名字；
+./ 表示当前目录文件夹内的文件
+roslaunch pakeage-name launch-file-name //运行launch文件
+history | grep git 该命令用于查看git的历史记录
+清除ros中的log：1.rm -rf /home/lyk/.ros/log
+
+
+在运行所有文件前 记得scource一下；
+或者是将常用功能包路径加入.bashrc：
+echo "source ~/catkin_google_ws/devel/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+echo $ROS_PACKAGE_PATH 查看当前环境变量
+linux的bashrc文件在/home目录下，但是是一个隐藏文件，在文件管理器里面按Ctrl+H即可显示(显示为.bashrc，前面小点儿表示隐藏文件）。
+也可以直接利用terminal直接打开：sudo gedit ~/.bashrc
+
+
+
+rqt_console 命令用来图像化显示和过滤ros系统运行状态中的所有日志消息：
+rosrun rqt_tf_tree rqt_tf_tree 该命令查看当前系统状态下的tf树。
+rqt_graph 该命令查看节点与话题关系。
+（以上两条调试时十分重要）
+rqt_image_view 对usb相机进行话题订阅和显示
+rostopic list 可以查看当前正在运行的话题
+rostopic echo /scan 订阅当前某一（scan雷达）话题
+rostopic info /xxx  查看特定话题的发布者和订阅者
+rosservice list 同理
+
+
+在rosrun [文件夹名] xxx.py文件时，（使用catkin_make编译之后，功能包并未报错）但去报错说找不到xxx.py可执行文件，原因如下：
+在git clone之后，其中的部分文件失去了执行权限，比如这个xxx.py，因此它没法生成可执行文件，启动文件就报错了。
+解决办法很简单：
+1.改一下权限就可以了：sudo chmod +x 所需的Python文件名.py 
+2.不用rosrun来启动.py文件，在包含该.py文件的目录下使用 python xxx.py 就可以啦
+之后编译重新运行就可以了。
+
+修改带锁的文件夹方法:
+sudo chmod -R 777 所需要解锁的文件夹或者文件
+
+
+在使用一个库时，我们首先应在对其源码进行下载，一般为压缩包形式，解压后,先将需要的依赖安装，再进行cmake编译和sudo make install来进行安装。如下：
+cd [文件夹]
+mkdir build
+cd build
+cmake ..
+sudo make
+sudo make install
+卸载通过以上方式源码安装的库
+再次进入build
+sudo make uninstall
+
+
+
+当你需要安装ROS的依赖包时，可以使用sudo apt-get install ros-kinetic-PACKAGE命令，其中
+sudo是root用户的意思，apt-get install是代表要安装软件，ros-kinetic-PACKAGE是依赖包的名字
+（其中ros-kinetic-代表是ROS的依赖包，kinetic是你所使用ROS版本名字,PACKAGE是需要替换的地方，指的是依赖包的名字） 
+例如：sudo apt-get install ros-kinetic-gazebo-plugins（需安装gazebo_plugins时）
+而当遇到如下问题：E: Unable to locate package gazebo_plugins则表示定位不到包，就是找不到，首先检查gazebo_plugins是否可以写成gazebo-lugins（两者的连接“﹣”不一样）
+
+
+GAZEBO仿真：
+用gazebo打开自己编写的.urdf文件：
+1.roslaunch gazebo_ros empty_world.launch 打开一个空的gazebo
+2.cd.urdf文件的路径 
+3.rosrun gazebo_ros spawn_model -file object.urdf -urdf -z 1 -model my_object（object.urdf是一个.urdf文件，可更替）
+rosrun map_server map_saver机后器人建图地图保存（在当前执行的终端目录下）
+
+
+下载bag文件（例程）：
+wget -p ~/Downloads(存放地址）+bag网址
+用cartographer功能包利用雷达进行定位仿真的博文链接：
+https://blog.csdn.net/sunstarss/article/details/88256646
+
+
+
+怎么用launch文件跑bag文件：
+例子：
+<launch>
+  <!-- <remap from="/camera/depth_registered/camera_info" to="/camera/depth/camera_info"/> -->
+  <!-- <remap from="/camera/depth_registered/image_raw" to="/camera/depth/image_raw"/> -->
+  <node pkg="rosbag" type="play" name="playe" output="screen" args="--clock /home/zuo/database/tModel-P/calib/test/2017-10-18-21-30-41.bag"/>
+  <!-- 注意这里bag文件的路径必须为绝对路径-->
+</launch>
+不用launch文件时：rosbag play --clock 加bag的绝对路径/xxx.bag （有时需要先launch工程文件，譬如rtab的：roslaunch rtabmap_ros demo_robot_mapping.launch）
+
+
+
+点云图：生成的点云以 pcd 格式存储在xxx.pcd 中，用 PCL 提供的可视化程序打开这个文件:例如查看map.pcd：pcl_viewer map.pcd
+八叉图：用Octovis可以查看xxx.bt八叉树地图文件:例如查看octomap.bt：octovis octomap.bt
+
+
+
+将rosbag里面的topic转为txt格式：
+方法一：可以用下面的命令打印话题里面的固定消息，而且保存为画图格式（这中方法需要先回放bag文件，但好处就是可以在想要的时间段提取所需要的话题）:
+
+rostopic echo -p /mavros/local_position/pose/pose/position > uav_position.txt
+
+rostopic echo的-p 选项为输出为画图的格式，加上这个选项过后，输出内容除了第一行是字符串指定下面每一列数据的名字外，之后输出的是逗号分隔的数据。
+符号 > 是Linux的输出重定向标志，我们就用重定向输出到txt里面。如果文本不存在则会自动新建这个文本。 符号>是会清空文本里面的内容，重新开始写入。符号>>是接着文本的末尾开始写入，不会清空文件。
+关于rostopic echo的具体详细介绍参见ros官网英语介绍
+
+方法二：将file_name.bag文件中topic_name话题的消息转换到Txt_name.txt文件中：rostopic echo -b file_name.bag -p /topic_name > Txt_name.txt
+（这种方法无需回放bag文件）
+
+
+
+截取bag文件的一部分：主要还是通过时间截取bag包： rosbag filter bigxxx.bag outmy.bag "t.to_sec() >= 0.00 and t.to_sec() <= 10.00"
+直接利用终端发布一个话题：rostopic pub -1 /local_planner/goal_position geometry_msgs/Point "{x: 200.0,y: 0.0,z: 1.5}"
+
+
+
+vim使用链接：
+https://blog.csdn.net/yangshuainan/article/details/78219604
+
+
+
+串口，usb设备查询测试：
+串口对应于linux系统位于/dev/tty下面；
+用该命令查询多个realsense设备的串口号：rs-enumerate-devices | grep Serial
+dmesg | grep "tty"该命令可以用终端查看目前接入的usb端口号
+1、查看串口是否可用，可以对串口发送数据比如对ttys0：echo lyjie126 > /dev/ttyS0                    
+2、查看串zhi口名称使用 ls -l /dev/ttyS* 一般情况下串口的名称全部在dev下面，如果你没有外插串口卡的话默认是dev下的ttyS* ,一般ttyS0对应com1，ttyS1对应com2，当然也不一定是必然的；
+3、查看串口驱动：cat /proc/tty/drivers/serial
+4、查看串口设备：dmesg | gre* ttyS*
+给缺少权限的端口，程序（cpp py等程序）加权：sudo chmod +x “要加权的东西”/或者/sudo chmod +777 “要加权的东西”。
+
+
+远桌面控制：ssh
+参考博客：https://blog.csdn.net/qq_38649880/article/details/93637495
+在本机终端运行：ssh nvidia@10.42.0.152  //@符号之前的内容为用户名，后面为远程电脑的IP地址，这里远程电脑TX2的用户名叫做nvidia，IP为10.42.0.152。第一次连接的时候会弹出一些询问消息，输入yes即可，接下输入远程的用户密码就可以控制远程电脑的终端了。
+
+roscore的远程使用：两个上位机设备链接在同一局域网内之后，利用ifconfige参数查看分别的IP地址：随后在需要开启另一台设备的roscore的bashrc中加入如下参数：
+
+export ROS_MASTER_URI=http://192.168.253.100:11311
+export ROS_IP=192.168.253.101
+（上述步鄹的核心是将本机的roscore的开启地址更改为对方机器的IP地址）
+
+
+
+catkin_make编译：
+在工作空间目录下使用：
+1.catkin_make 编译所有功能包
+2.编译特定功能包：catkin_make -DCATKIN_WHITELIST_PACKAGES="所需编译的功能包"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

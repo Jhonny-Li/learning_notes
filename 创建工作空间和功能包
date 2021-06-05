@@ -1,0 +1,86 @@
+
+工作空间的创建：
+1.$ mkdir -p ~/catkin_ws/src
+2.$ cd ~/catkin_ws/src
+3.$ catkin_init_workspace
+在工作空间根目录下编译工作空间
+4.$ cd ~/catkin_ws
+5.$ catkin_make
+令环境变量生效
+6.$ source devel/setup.bash
+检查是否生效
+7.$ echo $ROS_PACKAGE_PATH
+
+
+
+功能包创建：
+1.进入代码空间 cd ~/catkin_ws/src
+2.$ catkin_create_pkg learning_communication std_msgs rospy roscpp
+3.$ cd ~/catkin_ws
+4.$ catkin_make
+5.$ source ~/catkin_ws/devel/setup.bash
+
+
+
+安装cartographer功能包（没有二进制包，需要编译）
+先建一个新的工作空间，不要创建任何东西；
+1安装工具：
+sudo apt-get update 
+sudo apt-get install -y python-wstool python-rosdep ninja-build
+
+2.初始化工作空间：
+cd ~/catkin_google_ws/
+wstool init src
+
+3.加入cartographer_ros.rosinstall依赖并更新：
+ wstool merge -t src http://raw.githubusercontent.com/googlecartographer/cartographer_ros/master/cartographer_ros.rosinstall
+ wstool update -t src
+
+4.安装依赖并下载catographer相关功能包：
+rosdep update
+rosdep install --from-paths src --ignore-src --rosdistro=${ROS_DISTRO} -y
+
+5.编译并安装：
+catkin_make_isolated --install --use-ninja
+source install_isolated/setup.bash
+
+
+
+
+
+摄像头的标定：
+首先下载camera_calibration功能包：
+sudo apt-get install ros-kinetic-camera-calibration
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

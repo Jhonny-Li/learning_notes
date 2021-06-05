@@ -1,0 +1,109 @@
+
+在用rosbag录实验文件的时候，除了录入后面所需要的话题，一定不要忘记录入tf 和tf_static 两话题，否则无法对录入的话题利用tf树链接起来。
+此外，在跑bag的时候<arg name="use_sim_time" default="true"/>该参数要为真，以使用仿真时间，统一时间戳。
+例如，在录rtabmap的bag时，所需要录入的话题如下：rosbag record -b 4096 /t265/odom/sample /d400/color/image_raw /d400/color/camera_info /d400/depth/camera_info /d400/depth/image_rect_raw /tf /d400/aligned_depth_to_color/image_raw /tf_static /d400/depth/color/points /d400/imu
+
+
+
+rosbag简介
+
+rosbag 既可以指命令行中数据包相关命令，也可以指 c++/python 的 rosbag 库。这里的 rosbag 是指前者。
+rosbag 主要用于记录、回放、分析 rostopic 中的数据。它可以将指定 rostopic 中的数据记录到 .bag 后缀的数据包中，便于对其中的数据进行离线分析和处理。
+对于 subscribe 某个 topic 的节点来说，它无法区分这个 topic 中的数据到底是实时获取的数据还是从 rosbag 中回放的数据。这就有助于我们基于离线数据快速重现曾经的实际场景，进行可重复、低成本的分析和调试。
+
+rosbag record
+启动与 turtlesim 相关的两个 ros node
+roscore
+rosrun turtlesim turtlesim_node 
+rosrun turtlesim turtle_teleop_key
+
+cd ~/bagfiles
+rosbag record -a
+
+-a 选项表示将当前发布的所有 topic 数据都录制保存到一个 rosbag 文件中，录制的数据包名字为日期加时间。
+
+也可以只记录某些感兴趣的 topic
+rosbag record /topic_name1 /topic_name2 /topic_name3
+
+如果要指定生成数据包的名字，则用-O /-o 参数，如下：
+rosbag record -O filename.bag /topic_name1
+
+如果在 launch 文件中使用 rosbag record 命令，如下：
+<node pkg="rosbag" type="record" name="bag_record" args="/topic1 /topic2"/> 
+
+rosbag info
+rosbag info指令可以显示数据包中的信息:
+rosbag info filename.bag
+显示类似下边的信息：
+xiaohu@xiaohu:~/bagfiles$ rosbag info 1.bag 
+path:        1.bag
+version:     2.0
+duration:    3.3s
+start:       Aug 24 2019 21:37:53.35 (1566653873.35)
+end:         Aug 24 2019 21:37:56.65 (1566653876.65)
+size:        7.9 KB
+messages:    20
+compression: none [1/1 chunks]
+types:       geometry_msgs/Twist [9f195f881246fdfa2798d1d3eebca84a]
+topics:      /turtle1/cmd_vel   20 msgs    : geometry_msgs/Twist
+
+Print information in YAML format.
+ rosbag info -y filename.bag
+如下：
+xiaohu@xiaohu:~/bagfiles$  rosbag info -y 1.bag
+path: 1.bag
+version: 2.0
+duration: 3.295966
+start: 1566653873.351150
+end: 1566653876.647117
+size: 8103
+messages: 20
+indexed: True
+compression: none
+types:
+    - type: geometry_msgs/Twist
+      md5: 9f195f881246fdfa2798d1d3eebca84a
+topics:
+    - topic: /turtle1/cmd_vel
+      type: geometry_msgs/Twist
+      messages: 20
+
+rosbag play
+接下来回放数据包中的 topic。
+保留turtlesim节点继续运行。
+rosbag play <bagfile>
+
+如果想改变消息的发布速率，可以用下面的命令，-r 后面的数字对应播放速率。
+rosbag play -r 2 <bagfile>
+
+如果希望 rosbag 循环播放，可以用命令
+rosbag play -l  <bagfile>  # -l== --loop
+
+如果只播放感兴趣的 topic ，则用命令
+rosbag play <bagfile> --topic /topic1
+
+在上述播放命令执行期间，空格键可以暂停播放。
+
+将rosbag命令包含到launch文件中：
+<node pkg="rosbag" type="record" name="bag_record" arg="/temp /accl"/> /temp /accl为要记录的话题名。
+
+
+ROS数据打印导入MATLAB
+ROS虽然有在线画图的插件，但是有时候需要保存数据，而且有时候也需要进行MATLAB数据分析。MATLAB其实可以直接和ROS相连，在MATLAB里面写ros都是可以的，不得不说MATLAB确实很强大。在这主要介绍的是运用rostopic echo保存数据。
+rostopic echo直接打印的话题数据有很多东西，而且这个不能直接导入MATLAB进行画图。
+rostopic echo提供了很多的方便。
+可以用下面的命令打印话题里面的固定消息，而且保存为画图格式:
+
+rostopic echo -p /mavros/local_position/pose/pose/position > uav_position.txt
+
+rostopic echo的-p 选项为输出为画图的格式，加上这个选项过后，输出内容除了第一行是字符串指定下面每一列数据的名字外，之后输出的是逗号分隔的数据。
+
+符号 > 是Linux的输出重定向标志，我们就用重定向输出到txt里面。如果文本不存在则会自动新建这个文本。 符号>是会清空文本里面的内容，重新开始写入。符号>>是接着文本的末尾开始写入，不会清空文件。
+关于rostopic echo的具体详细介绍参见ros官网英语介绍
+
+
+
+
+
+
+

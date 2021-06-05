@@ -1,0 +1,24 @@
+官网链接：http://wiki.ros.org/robot_state_publisher  以及教学：http://wiki.ros.org/robot_state_publisher/Tutorials/Using%20the%20robot%20state%20publisher%20on%20your%20own%20robot
+
+Robot_State_Publisher:这个包允许你发布机器人的状态到tf树，利用机器人的关节角度作为话题输入，通过搭建的机器人urdf来完成各个关节之间的坐标变换，以此发布机器人的link之间的3D位姿。
+
+robot_state_publisher uses the URDF specified by the parameter robot_description and the joint positions from the topic joint_states to calculate the forward kinematics of the robot and publish the results via tf.译：robot_state_publisher 使用 由robot_description参数来确定的urdf模型 和 来自joint_states（关节状态）话题的关节位置 这两个内容来计算机器人的正向运动学并通过tf来发布结果。
+
+
+State_Publisher Node
+ROS API（ros接口）：
+
+Subscribed topics 需要订阅的话题：
+joint_states (sensor_msgs/JointState)：joint position information
+
+Parameters 参数：
+robot_description (urdf map)：The urdf xml robot description. This is accessed via `urdf_model::initParam`
+
+tf_prefix (string)：Set the tf prefix for namespace-aware publishing of transforms. See tf_prefix for more details.
+
+publish_frequency (double)：Publish frequency of state publisher, default: 50Hz.
+
+ignore_timestamp (bool)：If true, ignore the publish_frequency and the timestamp of joint_states and publish a tf for each of the received joint_states. Default is "false".
+
+
+use_tf_static (bool)Set whether to use the /tf_static latched static transform broadcaster. Default: true.

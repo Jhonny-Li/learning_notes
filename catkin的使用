@@ -1,0 +1,51 @@
+1.2 Isolated Catkin Workflow
+合并构建过程和catkin——make工具的众多缺陷促使catkin_make_isolated工具的开发。与catkin_make不同，catkin_make_isolated命令使用一个隔离的构建过程，其中每个包都是独立配置、构建和加载到环境中的。
+
+这样，每个包都是独立构建的，下一个包构建在当前包的原子结果上。这解决了目标冲突、目标依赖项管理和项目之间其他不希望的交叉对话的问题。这也允许其他构建工具的同构自动化，如普通CMake或autotools。
+
+catkin_make_isolated的工作流程还启用了以下功能：
+
+允许构建工作空间的一部分
+将Catkin和非Catkin项目构建到单个开发空间中
+无需重新配置或重新构建其依赖关系即可构建软件包
+在构建任何软件包之前，消除了工作区中所有软件包都没有CMake错误的要求
+然而，catkin_make_isolated仍然存在一些问题。首先，**它比catkin_make慢得多，因为它不能并行地构建相互不依赖的目标甚至包。它还缺乏对工作空间中包列表的更改的健壮性。**因为它是一个发布的工具，所以它也有严格的API稳定性要求。
+
+1.3 Parallel Isolated Catkin Workflow and catkin build
+catkin_make_isolated的局限性和需要额外的高级构建工具的需求，导致了并行版本的catkin make isolated，或pcmi的开发，作为Project Tango的一部分。pcmi后来成为这个项目中包含的catkin命令的构建动词。
+
+除了catkin_make和 catkin_make_isolated的功能catkin build还有如下功能:
+
+当包被添加到源空间或从源空间删除时，健壮地调整构建
+基于工作目录的给定包的上下文感知构建
+从工作空间中完全清除单个包的产品的能力
+Explicit control of workspace chaining
+Additional error-checking for common environment configuration errors
+Numerous other command-line user-interface improvements
+2 cmake和catkin_make区别
+catkin_make和cmake的区别
+简单来讲就是catkin_make是cmake的高级封装，很多路径是定义好的，用户只需要按照catkin_make的文件管理规则，使用catkin_make即可
+3 catkin_make和catkin build
+3.1 catkin_make 和 catkin build的重要区别
+与catkin_make不同**，catkin命令行工具不仅仅是一个简单的cmake和make命令的包装。** catkin构建命令 **在工作空间的源空间中单独构建每个包，以防止构建时的cross-talk。**因此，在其最简单的使用中，catkin build的行为类似于并行版本的catkin_make_isolatied
+
+虽然文档的其余部分描述了catkin工具中更多的特性，但本章详细介绍了如何从使用catkin_make和catkin_make_isolated换到使用catkin make。本章不描述catkin工具在catkin_make和catkin_make_isolated上提供的高级特性。要快速了解如何使用catkin构建，请参阅cheat_sheet。
+
+3.2 Isolation的含义
+对于catkin_make_isolated和catkin build来讲，隔离编译(build isolation)有如下含义
+
+在source space中没有top-level的CMakeLists.txt
+每一个pkg都有一个独立的使用catkin_tools的编译空间
+使用catkin build的pkg不会访问在同一个workspace下其他pkg中定义的variables
+当前pkg使用的其他pkg中的依赖项，需要保证提前编译
+包不需要定义其他包中构建的ROS消息的目标依赖关系
+它将相同的CMake命令行参数传递给多个软件包
+如果每个CMake包都有一个带有适当的< build type>标记的package.xml文件，那么就可以构建普通的CMake包。
+3.3 catkin build与catkin_make_isolated的不同
+它使用内部作业服务器来分配负载，并行地构建包
+它将产品放入隐藏目录，然后象征性地将它们链接到devel空间(默认情况下)
+它将持久配置选项存储在工作区根目录下的.catkin_tools目录中
+它生成.catkin文件，其中单独列出每个源包，而不只是列出工作区的源空间。这将导致类似的ROS_PACKAGE_PATH变量，其中列出每个包源空间
+3.4 总结
+catkin系列工具的产生是为了更好的build使用cmake构建的pkg，catkin_make是cmake的升级版，可以认为是对cmake进一步封装的高级命令。然后是catkin_make_isolated，相比catkin_make的一个改进是将工作空间下的所有的pkg进行独立编译，缺点就是编译时间比catkin_make更长。最后就是catkin build，改进了catkin_make_isolated和catkin_make，能够对工作空间下每个pkg独立编译，并且使用更方便，对用户来讲命令更友好
+
