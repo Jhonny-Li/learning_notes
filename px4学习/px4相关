@@ -1,0 +1,62 @@
+装飞机时几点注意事项：
+1.飞控板上的pwmio out接电机信号输入；
+
+2.严格注意四个电机的安装方式和序号，右上为1，左下为2，左上为3，右下为4；
+
+3.电机安装方式：1,2为逆时针，3,4为顺时针。
+
+4.vio配置（opti_track配置相似）：首先配置mavros的配置文件；其次设置地面站的参数：（任务计算机与飞控利用串口连接--TELEM2口：配置方法修改参数MAV—1的串口为telem2即可，波特率921600）设置EKF2_AID_MAKS参数为：vision position fusion&vision yaw fusion
+
+5.定高雷达传感器设置：px4官网雷达配置：https://docs.px4.cc/master/en/sensor/lidar_lite.html
+设置地面站高度模式EKF2_HIGHT_MODE为range sensor，同时，设置 SENS_EN_LL40LS参数为2，即利用i2c通讯，若设置为1则使用pwm通讯，选择1或2 根据雷达的接线方式不同而不同详情见官网。雷达接线细节看官网。
+6.修改所有地面站参数后记得重启飞控。
+
+7.在校准过传感器后（罗盘，陀螺仪，加速度计等等）飞控一般会很稳定的飞起来，但定高模式可能会有问题（需要去调节定高模式的pid：一般是D和P）（飞机的电池和配重会很很大程度上影响飞控性能，需要微调pid；微调pid无需重启飞控）
+当遇到定高怎样都定不住的情况下，首先分析飞行日志，看是否时传感器或飞控隔震问题（对于不自带内部隔震的飞控，这很关键）。
+
+
+仿真时需为每架无人机配备fcu_url编号，以分辨不同的飞机：
+roslaunch mavros px4.launch fcu_url:="udp://:14540@127.0.0.1:14557"
+真实飞行时：fcu_url:=/dev/ttyS0之类的，表征串口号；可以用ls -l /dev/ttyTHS*来查询所用串口。
+
+
+地面站测试电机：pwm test -c 1 -p1200
+
+
+远桌面控制：ssh
+参考博客：https://blog.csdn.net/qq_38649880/article/details/93637495
+利用命令可以查询Ip地址：ifconfig 
+在本机终端运行：ssh nvidia@10.42.0.152  //@符号之前的内容为用户名，后面为远程电脑的IP地址，这里远程电脑TX2的用户名叫做nvidia，IP为10.42.0.152。第一次连接的时候会弹出一些询问消息，输入yes即可，接下输入远程的用户密码就可以控制远程电脑的终端了
+
+
+设置NVIDIA Xavier nx（或者说配置Ubuntu热点模式）：详情见https://www.jianshu.com/p/78092e0e8946
+
+sudo /opt/nvidia/jetson-io/jetson-io.py //该命令用于查询NVIDIA Xavier nx的排针引脚定义。
+任务计算机与飞控利用串口连接：一般使用三根线：将二者的地线相连，各自的Rx与对方的TX相连接。
+
+地形跟随&保持模式（均需要额外的距离传感器来辅助）：
+PX4 supports Terrain Following and Terrain Hold in Position and Altitude modes, on multicopters and VTOL vehicles in MC mode that have a distance sensor.
+该参数用来选择使用那种定高模式：EKF2_HGT_MODE 0：default altitude following； 1：terrain following； 2：Terrain hold。（1,2两种模式需要距离传感器）
+
+1.terrain following（地形跟随模式）
+Terrain following enables a vehicle to automatically maintain a relatively constant height above ground level when traveling at low altitudes. 
+This feature can be enabled in Position and Altitude modes, on multicopters and VTOL vehicles in MC mode that have a distance sensor.
+When terrain following is enabled, PX4 uses the output of the EKF estimator to provide the altitude estimate, and the estimated terrain altitude (calculated from distance sensor measurements using another estimator) to provide the altitude setpoint. As the distance to ground changes, the altitude setpoint adjusts to keep the height above ground constant.
+
+地形跟随失效场景：At higher altitudes (when the estimator reports that the distance sensor data is invalid) the vehicle switches to altitude following, and will typically fly at a near-constant height above mean sea level (AMSL) using the barometer for altitude data.
+
+2.Terrain hold（地形保持模式）
+Terrain hold is implemented similarly to terrain following. It uses the output of the EKF estimator to provide the altitude estimate, and the estimated terrain altitude (calculated from distance sensor measurements using a separate, single state terrain estimator) to provide the altitude setpoint. If the distance to ground changes due to external forces, the altitude setpoint adjusts to keep the height above ground constant.
+
+3.Range Aid
+Range Aid uses a distance sensor as the primary source of height estimation during low speed/low altitude operation, but will otherwise use the primary source of altitude data defined in EKF2_HGT_MODE (typically a barometer). It is primarily intended for takeoff and landing, in cases where the barometer setup is such that interference from rotor wash is excessive and can corrupt EKF state estimates.
+
+Range Aid is enabled by setting EKF2_RNG_AID=1 (when the primary source of altitude data (EKF2_HGT_MODE) is not the rangefinder).
+
+
+
+
+
+
+
+
