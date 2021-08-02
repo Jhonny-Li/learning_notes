@@ -1,0 +1,128 @@
+源资源：http://wiki.ros.org/roscpp/Overview/Callbacks%20and%20Spinning
+
+roscpp 不会尝试为您的应用程序指定线程模型。 这意味着虽然 roscpp 可能会在幕后使用线程来进行网络管理、调度等，但它永远不会将其线程暴露给您的应用程序。
+但是，roscpp 确实允许从任意数量的线程调用回调，如果这是您想要的。最终结果是，如果没有用户的一点工作，您的订阅、服务和其他回调将永远不会被调用。 
+最常见的解决方案是 ros::spin()，但您必须使用以下选项之一。
+(注意：回调队列/自旋对 roscpp 中的内部网络通信没有任何影响。 它们仅在用户回调发生时产生影响。 它们将对订阅队列产生影响，因为您处理回调的速度和消息到达的速度决定了消息是否会被丢弃)
+
+1.Single-threaded Spinning:
+=============================================================================================================================================================
+ros::init(argc, argv, "my_node");
+ros::NodeHandle nh;
+ros::Subscriber sub = nh.subscribe(...);
+...
+ros::spin();
+=============================================================================================================================================================
+In this application all user callbacks will be called from within the ros::spin() call. ros::spin() will not return until the node has been shutdown, 
+either through a call to ros::shutdown() or a Ctrl-C.
+
+
+Another common pattern is to call ros::spinOnce() periodically:
+=============================================================================================================================================================
+ros::Rate r(10); // 10 hz
+while (should_continue)
+{
+  ... do some work, publish some messages, etc. ...
+  ros::spinOnce();
+  r.sleep();
+}
+=============================================================================================================================================================
+
+
+Implementing a spin() of our own is quite simple:(实现自己的回调）
+=============================================================================================================================================================
+#include <ros/callback_queue.h>//span（）的例子
+ros::NodeHandle n;
+while (ros::ok())
+{
+  ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(0.1));
+}
+
+#include <ros/callback_queue.h>//spanOnce（）的例子
+ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(0));
+=============================================================================================================================================================
+Note: spin() and spinOnce() are really meant for single-threaded applications, and are not optimized for being called from multiple threads at once.
+See the multi-threaded spinning section for information on spinning from multiple threads.
+
+
+2.Multi-threaded Spinning
+roscpp provides some built-in（内置，固有）support for calling callbacks from multiple threads. There are two built-in options for this:
+（1）ros::MultiThreadedSpinner:
+MultiThreadedSpinner is a blocking spinner, similar to ros::spin(). You can specify a number of threads in its constructor, but if unspecified (or set to 0), 
+it will use a thread for each CPU core.
+=============================================================================================================================================================
+ros::MultiThreadedSpinner spinner(4); // Use 4 threads
+spinner.spin(); // spin() will not return until the node has been shutdown
+=============================================================================================================================================================
+
+(2)ros::AsyncSpinner (since 0.10):
+A more useful threaded spinner is the AsyncSpinner. Instead of a blocking spin() call, it has start() and stop() calls,
+and will automatically stop when it is destroyed. An equivalent use of AsyncSpinner to the MultiThreadedSpinner example above, is:
+=============================================================================================================================================================
+ros::AsyncSpinner spinner(4); // Use 4 threads
+spinner.start();
+ros::waitForShutdown();
+=============================================================================================================================================================
+多线程回调的实例：
+
+#include "ros/ros.h"
+#include "std_msgs/String.h"
+class multiReceiver
+{
+public:
+	multiReceiver()
+	{	
+		sub = nh.subscribe("chatter1", 1, &multiReceiver::chatterCallback1,this);
+		sub2 = nh.subscribe("chatter2", 1, &multiReceiver::chatterCallback2,this);
+	}
+	void chatterCallback1(const std_msgs::String::ConstPtr& msg);
+	void chatterCallback2(const std_msgs::String::ConstPtr& msg);
+ 
+private:
+	ros::NodeHandle nh;
+	ros::Subscriber sub;
+	ros::Subscriber sub2;
+  
+};
+ 
+ 
+void multiReceiver::chatterCallback1(const std_msgs::String::ConstPtr& msg)
+{
+  ROS_INFO("I heard: [%s]", msg->data.c_str());
+  ros::Rate loop_rate(0.5);//block chatterCallback2()
+  loop_rate.sleep();
+}
+ 
+void multiReceiver::chatterCallback2(const std_msgs::String::ConstPtr& msg)
+{
+  ROS_INFO("I heard: [%s]", msg->data.c_str());
+}
+  
+ 
+int main(int argc, char **argv)
+{
+ 
+  ros::init(argc, argv, "multi_sub");
+ 
+  multiReceiver recOb;
+  ros::spin();
+ 
+  return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
