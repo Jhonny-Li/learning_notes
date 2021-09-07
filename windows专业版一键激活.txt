@@ -1,0 +1,5 @@
+win10专业版用户激活方法
+请在CMD下依次输入以下命令：（以管理员身份打开）
+slmgr /ipk W269N-WFGWX-YVC9B-4J6C9-T83GX
+slmgr /skms kms.03k.org
+slmgr /ato
