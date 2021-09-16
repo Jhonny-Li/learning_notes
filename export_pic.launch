@@ -1,0 +1,8 @@
+<launch>
+    <node pkg="rosbag" type="play" name="rosbag" required="true" args="/home/lyk/bagfiles/2021-06-26-14-08-27.bag"/>
+    <node name="extract" pkg="image_view" type="extract_images" respawn="false" required="true" output="screen" cwd="ROS_HOME">
+    <remap from="image" to="/camera/color/image_raw"/>
+    <param name="sec_per_frame" value="0.1"/>
+    </node>
+</launch>
+
