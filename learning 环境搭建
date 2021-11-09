@@ -1,0 +1,17 @@
+#learning 环境配置理解
+首先anaconda和pycharm都可以理解为广义的IDE，且anaconda可以连接pycharm
+下面以anaconda为例讲述一下机器学习，深度学习环境配置：
+anaconda作为一个大的环境管理器，对于多项目的管理十分方便
+首先，base环境下，拥有独立于系统自身的Python版本（这里系统指ubuntu自带的或者Windows下载的），base下的Python版本取决于你所下载的anaconda版本
+虚拟环境管理：anaconda的base下可以管理很多不同的环境，同时都相互隔离，每个环境可以拥有自己相应的Python版本，深度学习库（TensorFlow或者pytorch）等等环境配置：
+创建新的环境：conda create -n <环境名字> python=3.6
+查看目前的所有虚拟环境: conda env list
+                  or  conda info --envs
+移除已经创建的环境：conda remove -n <环境名字> --all
+进入/退出相应的环境：conda activate <环境名字> /conda deactivate <环境名字>
+进入环境后安装相应的包&库：conda install <包名> 或者直接pip install
+
+#添加镜像源以加块包的下载速度
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
+
+#更多知识链接：https://www.it610.com/article/1279154253834764288.htm
