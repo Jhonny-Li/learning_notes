@@ -143,9 +143,16 @@ catkin_make编译：
 1.catkin_make 编译所有功能包
 2.编译特定功能包：catkin_make -DCATKIN_WHITELIST_PACKAGES="所需编译的功能包"
 
-
-
-
+查看某一算法的cpu占用率：（这里以查看Chrome为例子）
+top -n 10 -d 1 -b |grep -E "chrome" |tr -s " "| cut -f 9,10 > test.txt
+其中：
+　-n 10　表示次数设置为10次
+　-d 1　表示时间间隔为１秒
+　|grep -E "chrome" 　表示输出线程chrome的信息;
+　|tr -s " "　则表示利用一个空格来替代字段中出现的多个空格;
+　> test.txt　表示把数据写入到名为 test 的文本文件中;
+ 更多内容可以查看链接：https://blog.csdn.net/crp997576280/article/details/104559948
+ 利用查到的占用率信息可以求出平均占用率以及方差，标准差等，进一步作图。
 
 
 
